@@ -12,6 +12,8 @@ import {
   Box,
   Collapse,
   Button,
+  MenuItem,
+  Select,
 } from "@mui/material";
 import { TransitionGroup } from "react-transition-group";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -34,6 +36,7 @@ function Home() {
 
   const state = useSelector((state: Task[]) => state);
   const [newTask, setNewTask] = useState("");
+  const [filter, setFilter] = useState("");
 
   const handleToggle = (taskId: string) => {
     if (taskId) {
@@ -96,6 +99,15 @@ function Home() {
         }}
       >
         <div className="flex items-start gap-8">
+          <select
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className="text-neutral-600 py-2 text-center outline-blue-700"
+          >
+            <option value={""}>All</option>
+            <option value={"true"}>Completed</option>
+            <option value={"false"}>Not Completed</option>
+          </select>
           <TextField
             label="Add Task"
             variant="outlined"
@@ -132,79 +144,92 @@ function Home() {
         }}
       >
         <TransitionGroup>
-          {state.map((task: Task) => (
-            <Collapse key={task.id} in={true}>
-              <ListItem>
-                <Checkbox
-                  edge="start"
-                  checked={task.completed}
-                  onChange={() => handleToggle(task.id)}
-                  inputProps={{
-                    "aria-labelledby": `checkbox-list-secondary-label-${task.id}`,
-                    "data-testid": `checkbox-task-${task.id}`,
-                  }}
-                />
-                <StyledBox
-                  sx={{
-                    display: "flex",
-                    ":hover": {
-                      bgcolor: "#eee",
-                    },
-                    width: "100%",
-                    paddingX: 1,
-                    borderRadius: 2,
-                    transition: "all 0.3s linear",
-                  }}
-                >
-                  <StyledListItemText
-                    primary={
-                      <TextField
-                        value={task.title}
-                        onChange={(e) =>
-                          handleUpdateTask(
-                            task.id,
-                            e.target.value,
-                            task.completed
-                          )
-                        }
-                        fullWidth
-                        sx={{
-                          textDecoration: task.completed
-                            ? "line-through"
-                            : "none",
-                          color: task.completed
-                            ? "rgba(0, 0, 0, 0.5)"
-                            : "inherit",
-                        }}
-                        variant="standard"
-                        InputProps={{
-                          disableUnderline: true,
-                        }}
-                        inputProps={{ "data-testid": `task-title-${task.id}` }}
-                        disabled={task.completed}
-                      />
-                    }
+          {state
+            .filter((task: Task) => {
+              if (filter == "true" && task.completed) {
+                return true;
+              } else if (filter == "false" && !task.completed) {
+                return true;
+              } else if (filter == "") {
+                return true;
+              }
+              return false;
+            })
+            .map((task: Task) => (
+              <Collapse key={task.id} in={true}>
+                <ListItem>
+                  <Checkbox
+                    edge="start"
+                    checked={task.completed}
+                    onChange={() => handleToggle(task.id)}
+                    inputProps={{
+                      "aria-labelledby": `checkbox-list-secondary-label-${task.id}`,
+                      "data-testid": `checkbox-task-${task.id}`,
+                    }}
                   />
-                  <Stack
-                    direction="row"
-                    alignItems="center"
-                    spacing={1}
-                    sx={{ opacity: 1, transition: "opacity 0.3s" }}
-                    className="delete-icon"
+                  <StyledBox
+                    sx={{
+                      display: "flex",
+                      ":hover": {
+                        bgcolor: "#eee",
+                      },
+                      width: "100%",
+                      paddingX: 1,
+                      borderRadius: 2,
+                      transition: "all 0.3s linear",
+                    }}
                   >
-                    <DeleteIconButton
-                      aria-label="delete"
-                      sx={{ opacity: 1 }}
-                      onClick={() => handleDelete(task.id)}
-                      data-testid={`delete-task-${task.id}`}
+                    <StyledListItemText
+                      primary={
+                        <TextField
+                          value={task.title}
+                          onChange={(e) =>
+                            handleUpdateTask(
+                              task.id,
+                              e.target.value,
+                              task.completed
+                            )
+                          }
+                          fullWidth
+                          sx={{
+                            textDecoration: task.completed
+                              ? "line-through"
+                              : "none",
+                            color: task.completed
+                              ? "rgba(0, 0, 0, 0.5)"
+                              : "inherit",
+                          }}
+                          variant="standard"
+                          InputProps={{
+                            disableUnderline: true,
+                          }}
+                          inputProps={{
+                            "data-testid": `task-title-${task.id}`,
+                          }}
+                          disabled={task.completed}
+                        />
+                      }
+                    />
+                    <Stack
+                      direction="row"
+                      alignItems="center"
+                      spacing={1}
+                      sx={{ opacity: 1, transition: "opacity 0.3s" }}
+                      className="delete-icon"
                     >
-                      <DeleteIcon />
-                    </DeleteIconButton>
-                  </Stack>
-                </StyledBox>
-              </ListItem>
-            </Collapse>
-          ))}
+                      <DeleteIconButton
+                        aria-label="delete"
+                        sx={{ opacity: 1 }}
+                        onClick={() => handleDelete(task.id)}
+                        data-testid={`delete-task-${task.id}`}
+                      >
+                        <DeleteIcon />
+                      </DeleteIconButton>
+                    </Stack>
+                  </StyledBox>
+                </ListItem>
+              </Collapse>
+            ))}
         </TransitionGroup>
       </List>
     </div>
