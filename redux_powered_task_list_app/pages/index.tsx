@@ -114,6 +114,11 @@ function Home() {
     setEditTask({ title, id, completed });
   };
 
+  const handleReset = async (tasks) => {
+    console.log("here i am", tasks);
+    tasks?.forEach((task) => handleDelete(task.id));
+  };
+
   return (
     <div
       style={{
@@ -130,6 +135,7 @@ function Home() {
         gutterBottom
         sx={{ marginBottom: 5 }}
         color="secondary"
+        data-test="header-text"
       >
         Todo List
       </Typography>
@@ -146,10 +152,15 @@ function Home() {
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
             className="text-neutral-600 py-2 text-center outline-blue-700"
+            data-test="filter-task"
           >
             <option value={""}>All</option>
-            <option value={"true"}>Completed</option>
-            <option value={"false"}>Not Completed</option>
+            <option value={"true"} data-test="filter-completed">
+              Completed
+            </option>
+            <option value={"false"} data-test="filter-not-completed">
+              Not Completed
+            </option>
           </select>
           <TextField
             label="Add Task"
@@ -164,15 +175,23 @@ function Home() {
             }}
             inputProps={{ "data-testid": "add-task-input" }}
             sx={{ marginBottom: "1rem" }}
-            //data-testid=""
+            data-test="add-task-input"
           />
 
           <button
             className="bg-blue-500 px-4 py-2 rounded hover:bg-blue-600 transition-all"
             disabled={!newTask}
             onClick={() => handleAddTask()}
+            data-test="add-task-button"
           >
             Add
+          </button>
+          <button
+            className="bg-blue-500 px-4 py-2 rounded hover:bg-blue-600 transition-all"
+            onClick={() => handleReset(state)}
+            data-test="reset-task-button"
+          >
+            Reset
           </button>
         </div>
       </Box>
@@ -207,8 +226,8 @@ function Home() {
                     onChange={() => handleToggle(task.id)}
                     inputProps={{
                       "aria-labelledby": `checkbox-list-secondary-label-${task.id}`,
-                      "data-testid": `checkbox-task-${task.id}`,
                     }}
+                    data-test="task-checkbox"
                   />
                   <StyledBox
                     sx={{
@@ -251,33 +270,25 @@ function Home() {
                               ? "rgba(0, 0, 0, 0.5)"
                               : "inherit",
                           }}
+                          label="task-title-input"
                           variant="standard"
                           InputProps={{
                             disableUnderline: true,
-                          }}
-                          inputProps={{
-                            "data-testid": `task-title-${task.id}`,
+                            "data-test": "task-title-input",
                           }}
                           disabled={task.completed}
                         />
                       }
                     />
-                    <Stack
-                      direction="row"
-                      alignItems="center"
-                      spacing={1}
-                      sx={{ opacity: 1, transition: "opacity 0.3s" }}
+                    <button
+                      onClick={() => handleDelete(task.id)}
                       className="delete-icon"
+                      data-test={`delete-task`}
                     >
-                      <DeleteIconButton
-                        aria-label="delete"
-                        sx={{ opacity: 1 }}
-                        onClick={() => handleDelete(task.id)}
-                        data-testid={`delete-task-${task.id}`}
-                      >
+                      <DeleteIconButton aria-label="delete" sx={{ opacity: 1 }}>
                         <DeleteIcon />
                       </DeleteIconButton>
-                    </Stack>
+                    </button>
                   </StyledBox>
                 </ListItem>
               </Collapse>
