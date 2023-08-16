@@ -1,56 +1,52 @@
 import { Task } from "@/model";
-import {
-  UPDATE_TASK,
-  DELETE_TASK,
-  ADD_TASK,
-  COMPLETE_TASK,
-} from "./actionTypes";
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
-const initialState: Task[] = [];
+// Define our single API slice object
+export const apiSlice = createApi({
+  // The cache reducer expects to be added at `state.api` (already default - this is optional)
+  reducerPath: "api",
+  // All of our requests will have URLs starting with '/fakeApi'
+  baseQuery: fetchBaseQuery({ baseUrl: "http://localhost:3000/api" }),
+  tagTypes: ["Task"],
+  // The "endpoints" represent operations and requests for this server
+  endpoints: (builder: any) => ({
+    // The `getPosts` endpoint is a "query" operation that returns data
+    getTasks: builder.query({
+      // The URL for the request is '/fakeApi/posts'
+      query: () => "/tasks",
+      providesTags: ["Task"],
+    }),
+    addTask: builder.mutation({
+      query: (initialTask: Task) => ({
+        url: "/tasks",
+        method: "POST",
+        body: initialTask,
+      }),
+      invalidatesTags: ["Task"],
+    }),
+    updateTask: builder.mutation({
+      query: (initialTask: Task) => ({
+        url: "/tasks",
+        method: "PATCH",
+        body: initialTask,
+      }),
+      invalidatesTags: ["Task"],
+    }),
+    deleteTask: builder.mutation({
+      query: (toBeDeleted: Task) => ({
+        url: "/tasks",
+        method: "DELETE",
+        body: toBeDeleted,
+      }),
+      invalidatesTags: ["Task"],
+    }),
+  }),
+});
 
-export function taskReducer(state = initialState, action: any) {
-  // Check to see if the reducer cares about this action
-  switch (action.type) {
-    case ADD_TASK:
-      const newTask: Task = {
-        completed: false,
-        title: action.payload?.title,
-        id: action.payload?.id,
-      };
-      // If so, make a copy of `state`
-      return [
-        ...state,
-        // and update the copy with the new value
-        newTask,
-      ];
-    case UPDATE_TASK:
-      const updatedTask: Task = {
-        ...action.payload,
-      };
-
-      return state.map((task) => {
-        if (task.id === action.payload.id) {
-          return updatedTask;
-        }
-        return task;
-      });
-    case DELETE_TASK:
-      const id = action.payload;
-      //filter out the tasks other than the one to be deleted
-      return state.filter((task) => task.id !== id);
-
-    case COMPLETE_TASK:
-      const taskId = action.payload;
-      // make copy of the state and set the toggle the completed attribute
-      return state.map((task) => {
-        if (task.id === taskId) {
-          return { ...task, completed: !task.completed };
-        }
-        return task;
-      });
-    default:
-      // if the action is not known log error and do nothing
-      console.log("Unknown Action", action);
-      return state;
-  }
-}
+// Export the auto-generated hook for the `getPosts` query endpoint
+export const {
+  useGetTasksQuery,
+  useAddTaskMutation,
+  useUpdateTaskMutation,
+  useDeleteTaskMutation,
+} = apiSlice;

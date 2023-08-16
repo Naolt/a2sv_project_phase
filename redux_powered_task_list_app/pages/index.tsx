@@ -21,6 +21,12 @@ import AddIcon from "@mui/icons-material/Add";
 import { useSelector, useDispatch } from "react-redux";
 import { addTodo, completeTodo, deleteTodo, editTodo } from "@/store/actions";
 import { Task } from "@/model";
+import {
+  useGetTasksQuery,
+  useAddTaskMutation,
+  useUpdateTaskMutation,
+  useDeleteTaskMutation,
+} from "../store/reducer";
 
 const StyledListItemText = styled(ListItemText)(({ theme }) => ({}));
 const StyledBox = styled(Box)(({ theme }) => ({}));
@@ -34,41 +40,78 @@ const DeleteIconButton = styled(IconButton)(({ theme }) => ({
 function Home() {
   const dispatch = useDispatch();
 
-  const state = useSelector((state: Task[]) => state);
+  //const state = useSelector((state: Task[]) => state);
   const [newTask, setNewTask] = useState("");
+  const [editTask, setEditTask] = useState<Task | null>();
   const [filter, setFilter] = useState("");
 
-  const handleToggle = (taskId: string) => {
+  const {
+    data: state,
+    //isLoading,
+    isSuccess,
+    isError,
+    error,
+  } = useGetTasksQuery();
+
+  console.log("here are the tasks");
+  console.log("here are the tasks", state);
+
+  const [addTask, { isLoading: isLoadingAddTask }] = useAddTaskMutation();
+  const [updateTask, {}] = useUpdateTaskMutation();
+  const [deleteTask, {}] = useDeleteTaskMutation();
+
+  const handleToggle = async (taskId: string) => {
     if (taskId) {
-      console.log(taskId);
-      dispatch(completeTodo(taskId));
+      try {
+        let filtered = state.filter((task: Task) => task.id === taskId);
+        await updateTask({
+          ...filtered[0],
+          completed: !filtered[0].completed,
+        }).unwrap();
+      } catch (error) {
+        console.error("Failed to toogle task", error);
+      }
     }
   };
 
-  const handleDelete = (taskId: string) => {
+  const handleDelete = async (taskId: string) => {
     if (taskId) {
-      dispatch(deleteTodo(taskId));
+      try {
+        await deleteTask({ id: taskId }).unwrap();
+      } catch (error) {
+        console.error("Failed to delete the task", error);
+      }
     }
   };
 
-  const handleAddTask = () => {
+  const handleAddTask = async () => {
     if (newTask.trim() === "") {
       return;
     }
-
-    dispatch(addTodo(newTask.trim()));
+    try {
+      await addTask({ title: newTask, completed: false }).unwrap();
+    } catch (error) {
+      console.error("Failed to add the task", error);
+    }
 
     setNewTask("");
   };
 
-  const handleUpdateTask = (
-    taskId: string,
-    newTitle: string,
-    completed: boolean
-  ) => {
-    if (taskId) {
-      dispatch(editTodo(taskId, newTitle, completed));
+  const handleUpdateTask = async () => {
+    if (editTask?.id) {
+      try {
+        await updateTask({ ...editTask }).unwrap();
+      } catch (error) {
+        console.error("Failed to add the task", error);
+      } finally {
+        setEditTask(null);
+      }
     }
+  };
+
+  const handleTaskEdit = (title: string, id: string, completed: boolean) => {
+    console.log(title);
+    setEditTask({ title, id, completed });
   };
 
   return (
@@ -145,7 +188,7 @@ function Home() {
       >
         <TransitionGroup>
           {state
-            .filter((task: Task) => {
+            ?.filter((task: Task) => {
               if (filter == "true" && task.completed) {
                 return true;
               } else if (filter == "false" && !task.completed) {
@@ -182,14 +225,23 @@ function Home() {
                     <StyledListItemText
                       primary={
                         <TextField
-                          value={task.title}
+                          value={
+                            editTask?.id === task.id
+                              ? editTask.title
+                              : task.title
+                          }
                           onChange={(e) =>
-                            handleUpdateTask(
-                              task.id,
+                            handleTaskEdit(
                               e.target.value,
+                              task.id,
                               task.completed
                             )
                           }
+                          onKeyPress={(e) => {
+                            if (e.key === "Enter") {
+                              handleUpdateTask();
+                            }
+                          }}
                           fullWidth
                           sx={{
                             textDecoration: task.completed
